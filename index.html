@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Marcaje Facial</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #1a1a2e; color: white; }
+        .contenedor { margin-top: 20px; }
+        video, canvas { position: absolute; left: 50%; transform: translateX(-50%); border-radius: 10px; }
+        .controles { margin-top: 450px; }
+        button { padding: 15px 25px; margin: 10px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
+        .btn-reg { background: #0f3460; color: white; }
+        .btn-ent { background: #28a745; color: white; }
+        .btn-sal { background: #dc3545; color: white; }
+        #estado { color: #e94560; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>Sistema de Asistencia Facial</h2>
+    <p id="estado">Cargando Inteligencia Artificial...</p>
+
+    <div class="contenedor">
+        <video id="video" width="400" height="300" autoplay muted></video>
+    </div>
+
+    <div class="controles">
+        <input type="text" id="nombreUsuario" placeholder="Nombre para registro" style="padding: 10px; border-radius: 5px;">
+        <button class="btn-reg" onclick="registrarRostro()">1. Registrar Rostro</button>
+        <br>
+        <button class="btn-ent" onclick="identificarRostro('Entrada')">Marcar ENTRADA</button>
+        <button class="btn-sal" onclick="identificarRostro('Salida')">Marcar SALIDA</button>
+    </div>
+
+    <script>
+        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxwLkaOTgC9M8_z7_ZpmMspWK8L_0zr3RKmEuCy27VTSWKhOrriul91tff6RZFZPnKv/exec"; // REEMPLAZA ESTO
+        const video = document.getElementById('video');
+        let modelosCargados = false;
+        let usuariosRegistrados = [];
+
+        // 1. Cargar Modelos y Cámara
+        Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/ml5js/ml5-data-and-models/main/models/faceapi/tiny_face_detector_model-weights_manifest.json'),
+            faceapi.nets.faceLandmark68Net.loadFromUri('https://raw.githubusercontent.com/ml5js/ml5-data-and-models/main/models/faceapi/face_landmark_68_model-weights_manifest.json'),
+            faceapi.nets.faceRecognitionNet.loadFromUri('https://raw.githubusercontent.com/ml5js/ml5-data-and-models/main/models/faceapi/face_recognition_model-weights_manifest.json')
+        ]).then(iniciarVideo);
+
+        function iniciarVideo() {
+            navigator.mediaDevices.getUserMedia({ video: {} })
+                .then(stream => { 
+                    video.srcObject = stream;
+                    document.getElementById('estado').innerText = "Sistema Listo. Esperando Rostro...";
+                    modelosCargados = true;
+                    cargarUsuarios(); // Baja los datos de Google Sheets
+                });
+        }
+
+        async function cargarUsuarios() {
+            try {
+                const res = await fetch(URL_SCRIPT);
+                usuariosRegistrados = await res.json();
+                console.log("Usuarios cargados:", usuariosRegistrados.length);
+            } catch (e) { console.error("Error cargando usuarios", e); }
+        }
+
+        // 2. Función para Registrar un nuevo usuario
+        async function registrarRostro() {
+            const nombre = document.getElementById('nombreUsuario').value;
+            if (!nombre) return alert("Escribe un nombre");
+
+            document.getElementById('estado').innerText = "Escaneando...";
+            const deteccion = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+
+            if (deteccion) {
+                const datos = {
+                    tipo: "registro_facial",
+                    nombre: nombre,
+                    descriptor: Array.from(deteccion.descriptor)
+                };
+
+                await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) });
+                alert("¡Rostro guardado exitosamente!");
+                location.reload();
+            } else {
+                alert("No se detecta rostro. Acércate más.");
+            }
+        }
+
+        // 3. Función para Identificar y Marcar Asistencia
+        async function identificarRostro(accion) {
+            document.getElementById('estado').innerText = "Identificando...";
+            const deteccion = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+
+            if (!deteccion) return alert("Rostro no detectado");
+
+            let mejorMatch = { nombre: "Desconocido", distancia: 1 };
+
+            usuariosRegistrados.forEach(usr => {
+                const descriptorGuardado = new Float32Array(JSON.parse(usr[1]));
+                const distancia = faceapi.euclideanDistance(deteccion.descriptor, descriptorGuardado);
+                
+                if (distancia < 0.45 && distancia < mejorMatch.distancia) {
+                    mejorMatch = { nombre: usr[0], distancia: distancia };
+                }
+            });
+
+            if (mejorMatch.nombre !== "Desconocido") {
+                document.getElementById('estado').innerText = "¡Hola " + mejorMatch.nombre + "!";
+                const datos = { tipo: "marcaje", nombre: mejorMatch.nombre, accion: accion };
+                await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) });
+                alert("Asistencia grabada: " + mejorMatch.nombre);
+            } else {
+                alert("Rostro no reconocido. Regístrate primero.");
+            }
+        }
+    </script>
+</body>
+</html>
