@@ -3,30 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Asistencia Biométrica Pro</title>
+    <title>Asistencia Biométrica Total</title>
     <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #1a1a2e; color: white; margin: 0; padding: 0; transition: 0.3s; padding-bottom: 20px;}
         
-        /* Barra de Navegación Superior */
+        /* Navegación */
         .navbar { background: #111122; padding: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         .navbar-brand { font-weight: bold; font-size: 1.1em; cursor: pointer; user-select: none; }
         .btn-nav { background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 14px;}
 
-        /* Contenedor Principal Adaptable */
+        /* Contenedores */
         .main-container { padding: 15px; max-width: 400px; margin: 0 auto; }
-
         body.modo-luz { background: #ffffff; color: #000000; }
         body.modo-luz .navbar { background: #eeeeee; color: #000; }
         
         .contenedor-video { position: relative; width: 100%; aspect-ratio: 4/3; margin: 10px 0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); background: #000; }
         video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         
-        /* Control de visibilidad de pantallas */
         .seccion-controles { display: none; margin-top: 15px; }
         .seccion-controles.activa { display: block; }
 
+        /* Botones e Inputs */
         button, input { width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 8px; font-size: 16px; }
         button { cursor: pointer; font-weight: bold; transition: 0.3s; }
         button:active { opacity: 0.7; transform: scale(0.98); } 
@@ -36,10 +35,12 @@
         .btn-camara { background: #e0e0e0; color: #333; }
         
         .btn-reg-scan { background: #0f3460; color: white; }
-        .btn-reg-save { background: #e94560; color: white; display: none; } /* Oculto hasta escanear */
+        .btn-reg-save { background: #e94560; color: white; display: none; } 
         
+        .grid-botones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-ent { background: #28a745; color: white; }
         .btn-sal { background: #dc3545; color: white; }
+        .btn-huella { background: #8e44ad; color: white; margin-bottom: 0;}
         
         #estado { color: #e94560; font-weight: bold; font-size: 1.1em; min-height: 45px; margin: 5px 0; display: flex; align-items: center; justify-content: center;}
         input { text-align: center; background: #f0f0f0; color: #333; border: 1px solid #ccc; }
@@ -47,13 +48,13 @@
         .info-registro { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; margin-bottom: 10px; display: none;}
         body.modo-luz .info-registro { background: rgba(0,0,0,0.05); }
 
-        /* PANTALLA DE MANTENIMIENTO GLOBAL */
+        /* Bloqueo Global */
         #pantalla-mantenimiento {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: #111; color: white; z-index: 9999;
             flex-direction: column; justify-content: center; align-items: center;
         }
-        .icono-alerta { font-size: 100px; color: #f1c40f; cursor: pointer; margin-bottom: 20px; }
+        .icono-alerta { font-size: 100px; color: #f1c40f; cursor: pointer; margin-bottom: 20px; user-select: none;}
     </style>
 </head>
 <body>
@@ -61,12 +62,12 @@
     <div id="pantalla-mantenimiento">
         <div class="icono-alerta" onclick="intentarDesbloqueoGlobal()">❗</div>
         <h2>SISTEMA EN MANTENIMIENTO</h2>
-        <p>Aviso: Bloqueo de seguridad activado.</p>
+        <p>El sistema ha sido bloqueado por el administrador.</p>
     </div>
 
     <div class="navbar">
         <div class="navbar-brand" id="titulo-secreto" onclick="intentarBloqueoGlobal()">Asistencia Pro</div>
-        <button class="btn-navActiva act" id="btn-nav-principal" onclick="verMenuPrincipal()" style="display:none; background:#7f8c8d;">Volver</button>
+        <button class="btn-nav" id="btn-nav-principal" onclick="verMenuPrincipal()" style="display:none; background:#7f8c8d;">Volver</button>
         <button class="btn-nav" id="btn-nav-registro" onclick="verModoRegistro()">Registro</button>
     </div>
 
@@ -86,111 +87,145 @@
 
         <div id="controles-principal" class="seccion-controles activa">
             <input type="password" id="pinUsuario" class="input-pin" placeholder="🔑 Ingresa PIN para marcar">
-            <button class="btn-ent" onclick="marcarAsistencia('Entrada')">🟢 Marcar ENTRADA</button>
-            <button class="btn-sal" onclick="marcarAsistencia('Salida')">🔴 Marcar SALIDA</button>
+            
+            <div class="grid-botones">
+                <button class="btn-ent" onclick="marcarAsistencia('Entrada')">🟢 ROSTRO ENT.</button>
+                <button class="btn-sal" onclick="marcarAsistencia('Salida')">🔴 ROSTRO SAL.</button>
+            </div>
+            
+            <hr style="border: 1px solid #444; margin: 15px 0;">
+            <p style="margin: 5px; font-size: 14px; color: #aaa;">O usa tu lector biométrico:</p>
+            
+            <div class="grid-botones">
+                <button class="btn-huella" onclick="marcarConHuella('Entrada')">👆 HUELLA ENT.</button>
+                <button class="btn-huella" onclick="marcarConHuella('Salida')">👇 HUELLA SAL.</button>
+            </div>
         </div>
 
         <div id="controles-registro" class="seccion-controles">
-            <h3>Modo Registro</h3>
-            
+            <h3 style="margin-top: 0;">Registro de Usuario</h3>
             <button class="btn-reg-scan" id="btn-escanear" onclick="escanearRostroRegistro()">1. Escanear Rostro</button>
             
             <div id="datos-registro" class="info-registro">
                 <p style="color:#4caf50; font-weight:bold; margin-top:0;">✅ Rostro capturado.</p>
                 <input type="text" id="nombreRegistro" placeholder="Nombre Completo">
                 <input type="number" id="pinRegistro" placeholder="Crea un PIN numérico">
-                <button class="btn-reg-save" id="btn-guardar" onclick="guardarRegistroCompleto()">2. Guardar Registro</button>
+                <button class="btn-reg-save" id="btn-guardar" onclick="guardarRegistroCompleto()">2. Guardar (Pedirá Huella)</button>
             </div>
         </div>
 
     </div>
 
     <script>
-        // --- CONFIGURACIÓN ---
-        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxwLkaOTgC9M8_z7_ZpmMspWK8L_0zr3RKmEuCy27VTSWKhOrriul91tff6RZFZPnKv/exec"; // ¡PEGA TU URL AQUÍ!
+        // =====================================================================
+        // 1. CONFIGURACIÓN PRINCIPAL
+        // =====================================================================
+        const URL_SCRIPT = "TU_URL_DE_APPS_SCRIPT_AQUI"; // <--- ¡PEGA TU URL AQUÍ!
         const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+        
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        let modelosCargados = false;
-        let usuariosRegistrados = [];
-        let tipoCamara = "user"; 
-        let descriptorTemporal = null; // Guarda el rostro escaneado antes de guardar
-        let modoActual = "principal"; // principal o registro
+        let modelosCargados = false; 
+        let usuariosRegistrados = []; 
+        let tipoCamara = "user"; // "user" = frontal, "environment" = trasera
+        let descriptorTemporal = null; 
+        let modoActual = "principal";
 
-        // --- NAVEGACIÓN ---
-        function verMenuPrincipal() {
-            modoActual = "principal";
-            toggleSecciones('controles-principal');
-            document.getElementById('btn-nav-principal').style.display = 'none';
-            document.getElementById('btn-nav-registro').style.display = 'block';
-            document.getElementById('estado').innerText = "Listo. Usa cámara o PIN.";
-            resetearFormularioRegistro();
+        // =====================================================================
+        // 2. NAVEGACIÓN DE LA INTERFAZ
+        // =====================================================================
+        function verMenuPrincipal() { 
+            modoActual = "principal"; 
+            toggleSecciones('controles-principal'); 
+            document.getElementById('btn-nav-principal').style.display = 'none'; 
+            document.getElementById('btn-nav-registro').style.display = 'block'; 
+            document.getElementById('estado').innerText = "Listo. Usa cámara, PIN o Huella."; 
+            resetearFormularioRegistro(); 
         }
 
-        function verModoRegistro() {
-            modoActual = "registro";
-            toggleSecciones('controles-registro');
-            document.getElementById('btn-nav-principal').style.display = 'block';
-            document.getElementById('btn-nav-registro').style.display = 'none';
-            document.getElementById('estado').innerText = "Ponte frente a la cámara.";
-            resetearFormularioRegistro();
+        function verModoRegistro() { 
+            modoActual = "registro"; 
+            toggleSecciones('controles-registro'); 
+            document.getElementById('btn-nav-principal').style.display = 'block'; 
+            document.getElementById('btn-nav-registro').style.display = 'none'; 
+            document.getElementById('estado').innerText = "Ponte frente a la cámara."; 
+            resetearFormularioRegistro(); 
         }
 
-        function toggleSecciones(idActiva) {
-            document.querySelectorAll('.seccion-controles').forEach(s => s.classList.remove('activa'));
-            document.getElementById(idActiva).classList.add('activa');
+        function toggleSecciones(id) { 
+            document.querySelectorAll('.seccion-controles').forEach(s => s.classList.remove('activa')); 
+            document.getElementById(id).classList.add('activa'); 
         }
 
-        function resetearFormularioRegistro() {
-            descriptorTemporal = null;
-            document.getElementById('btn-escanear').style.display = 'block';
-            document.getElementById('datos-registro').style.display = 'none';
-            document.getElementById('btn-guardar').style.display = 'none';
-            document.getElementById('nombreRegistro').value = '';
-            document.getElementById('pinRegistro').value = '';
+        function resetearFormularioRegistro() { 
+            descriptorTemporal = null; 
+            document.getElementById('btn-escanear').style.display = 'block'; 
+            document.getElementById('datos-registro').style.display = 'none'; 
+            document.getElementById('nombreRegistro').value = ''; 
+            document.getElementById('pinRegistro').value = ''; 
         }
 
-        // --- INICIO DEL SISTEMA Y OPTIMIZACIÓN DE IA ---
+        function cambiarCamara() { 
+            tipoCamara = (tipoCamara === "user") ? "environment" : "user"; 
+            iniciarVideo(); 
+        }
+
+        function toggleLuz() { 
+            document.body.classList.toggle('modo-luz'); 
+        }
+
+        // =====================================================================
+        // 3. INICIALIZACIÓN Y CÁMARA
+        // =====================================================================
         async function iniciarTodo() {
             document.getElementById('estado').innerText = "Verificando Seguridad...";
             try {
-                const res = await fetch(URL_SCRIPT);
+                const res = await fetch(URL_SCRIPT); 
                 const data = await res.json();
-                if (data.estado === "mantenimiento") {
-                    document.getElementById('pantalla-mantenimiento').style.display = 'flex';
-                    return;
+                
+                // Verifica si hay bloqueo global
+                if (data.estado === "mantenimiento") { 
+                    document.getElementById('pantalla-mantenimiento').style.display = 'flex'; 
+                    return; 
                 }
-                usuariosRegistrados = data.usuarios;
+                
+                usuariosRegistrados = data.usuarios; 
                 cargarIA();
-            } catch (e) { document.getElementById('estado').innerText = "Error de conexión."; }
+            } catch (e) { 
+                document.getElementById('estado').innerText = "Error de conexión con la nube."; 
+            }
         }
 
         function cargarIA() {
-            document.getElementById('estado').innerText = "Cargando Motores...";
+            document.getElementById('estado').innerText = "Cargando Inteligencia Artificial...";
             Promise.all([
-                // Modelo pesado para Precisión (un solo disparo)
-                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL), // Modelo Pesado (Precisión)
                 faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-                // Modelo ligero para Velocidad (dibujo en tiempo real)
-                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL)
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL), 
+                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL)  // Modelo Ligero (Velocidad en vivo)
             ]).then(iniciarVideo);
         }
 
         function iniciarVideo() {
             if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: tipoCamara } })
-                .then(stream => { 
-                    video.srcObject = stream;
-                    let escala = (tipoCamara === "user") ? "scaleX(-1)" : "scaleX(1)";
-                    video.style.transform = escala; canvas.style.transform = escala;
-                    document.getElementById('estado').innerText = "Listo. Usa cámara o PIN.";
-                    document.getElementById('estado').style.color = "#4caf50";
-                    modelosCargados = true;
-                });
+            
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: tipoCamara } }).then(stream => { 
+                video.srcObject = stream;
+                
+                // Efecto espejo dinámico
+                let escala = (tipoCamara === "user") ? "scaleX(-1)" : "scaleX(1)";
+                video.style.transform = escala; 
+                canvas.style.transform = escala;
+                
+                document.getElementById('estado').innerText = "Listo. Usa cámara, PIN o Huella."; 
+                document.getElementById('estado').style.color = "#4caf50"; 
+                modelosCargados = true;
+            }).catch(err => {
+                document.getElementById('estado').innerText = "Otorga permisos de cámara.";
+            });
         }
 
-        // --- BUCLE DE DIBUJO OPTIMIZADO (TINY FACE DETECTOR) ---
+        // DIBUJO EN TIEMPO REAL (ALTO RENDIMIENTO - FPS)
         video.addEventListener('play', () => {
             const displaySize = { width: video.videoWidth || 400, height: video.videoHeight || 300 };
             faceapi.matchDimensions(canvas, displaySize);
@@ -198,39 +233,87 @@
             setInterval(async () => {
                 if (!modelosCargados || !video.srcObject) return;
                 
-                // USAMOS TINY DETECTOR AQUÍ PARA VELOCIDAD (FPS ALTOS)
+                // Usa TinyFaceDetector para mantener los FPS altos
                 const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }));
-                
                 const currentSize = { width: video.videoWidth, height: video.videoHeight };
-                const resizedDetections = faceapi.resizeResults(detections, currentSize);
                 
                 canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-                faceapi.draw.drawDetections(canvas, resizedDetections);
-            }, 50); // Actualiza rápido (50ms) para suavidad
+                faceapi.draw.drawDetections(canvas, faceapi.resizeResults(detections, currentSize));
+            }, 50); // Se actualiza cada 50ms
         });
 
-        // --- LÓGICA DE REGISTRO OPTIMIZADA (SIN PROMPTS INTERMEDIOS) ---
+        // =====================================================================
+        // 4. WEBAUTHN (BIOMETRÍA DE HUELLA DACTILAR)
+        // =====================================================================
+        function bufferEncode(str) { 
+            return new Uint8Array(str.split('').map(c => c.charCodeAt(0))); 
+        }
+
+        async function registrarHuellaWebAuthn(nombre) {
+            if (!window.PublicKeyCredential) { 
+                alert("Tu dispositivo no soporta o tiene bloqueada la huella dactilar web."); 
+                return null; 
+            }
+            try {
+                document.getElementById('estado').innerText = "Sigue las instrucciones del teléfono (Huella)...";
+                const publicKey = {
+                    challenge: bufferEncode("registro_" + Date.now()), 
+                    rp: { name: "Asistencia Pro", id: window.location.hostname }, 
+                    user: { id: bufferEncode(nombre + Date.now()), name: nombre, displayName: nombre },
+                    pubKeyCredParams: [{alg: -7, type: "public-key"}], 
+                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" }, 
+                    timeout: 60000
+                };
+                const cred = await navigator.credentials.create({ publicKey });
+                return cred.id; // Devuelve la credencial única
+            } catch (e) {
+                console.log(e); 
+                alert("Registro de huella cancelado o fallido."); 
+                return null;
+            }
+        }
+
+        async function validarHuellaWebAuthn() {
+            if (!window.PublicKeyCredential) { 
+                alert("Tu dispositivo no soporta o tiene bloqueada la huella dactilar web."); 
+                return null; 
+            }
+            try {
+                document.getElementById('estado').innerText = "Toca el sensor de huella...";
+                const publicKey = {
+                    challenge: bufferEncode("login_" + Date.now()),
+                    rpId: window.location.hostname,
+                    userVerification: "required"
+                };
+                const assertion = await navigator.credentials.get({ publicKey });
+                return assertion.id; // Devuelve la credencial de quien validó
+            } catch (e) {
+                console.log(e); 
+                alert("Autenticación por huella cancelada."); 
+                return null;
+            }
+        }
+
+        // =====================================================================
+        // 5. LÓGICA DE REGISTRO DE USUARIO
+        // =====================================================================
         async function escanearRostroRegistro() {
             if (!modelosCargados) return;
-            document.getElementById('estado').innerText = "Analizando rostro...";
+            document.getElementById('estado').innerText = "Analizando rostro..."; 
             document.getElementById('estado').style.color = "#e94560";
-
-            // USAMOS SSD (PESADO) SOLO UNA VEZ AQUÍ PARA PRECISIÓN
+            
+            // Usa SsdMobilenetv1 para máxima precisión
             const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
             
             if (det) {
-                descriptorTemporal = Array.from(det.descriptor); // Guardamos la huella facial
-                
-                // Cambiamos la interfaz para pedir datos
-                document.getElementById('btn-escanear').style.display = 'none';
+                descriptorTemporal = Array.from(det.descriptor);
+                document.getElementById('btn-escanear').style.display = 'none'; 
                 document.getElementById('datos-registro').style.display = 'block';
-                document.getElementById('btn-guardar').style.display = 'block';
-                document.getElementById('estado').innerText = "Rostro capturado. Completa los datos.";
+                document.getElementById('estado').innerText = "Rostro capturado. Completa los datos."; 
                 document.getElementById('estado').style.color = "#4caf50";
-                document.getElementById('nombreRegistro').focus();
-            } else {
-                alert("No detecto tu rostro claramente. Centra tu cara y busca buena luz.");
-                document.getElementById('estado').innerText = "Ponte frente a la cámara.";
+            } else { 
+                alert("No detecto tu rostro claramente. Centra tu cara."); 
+                document.getElementById('estado').innerText = "Ponte frente a la cámara."; 
             }
         }
 
@@ -238,8 +321,14 @@
             const nombre = document.getElementById('nombreRegistro').value.trim();
             const pin = document.getElementById('pinRegistro').value.trim();
 
-            if (!nombre || !pin || isNaN(pin)) return alert("Por favor, ingresa Nombre y un PIN numérico válido.");
-            if (!descriptorTemporal) return alert("Error: No hay rostro escaneado.");
+            if (!nombre || !pin || isNaN(pin)) return alert("Ingresa Nombre y un PIN numérico.");
+            
+            // Llama al sistema de huellas
+            const huellaId = await registrarHuellaWebAuthn(nombre);
+            if (!huellaId) {
+                document.getElementById('estado').innerText = "Registro cancelado.";
+                return; 
+            }
 
             document.getElementById('estado').innerText = "Guardando en la nube...";
             
@@ -247,93 +336,147 @@
                 tipo: "registro_facial", 
                 nombre: nombre, 
                 descriptor: descriptorTemporal, 
-                pin: pin 
+                pin: pin, 
+                huellaId: huellaId 
             };
 
             try {
                 await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) });
-                alert("✅ ¡Registro Exitoso!\nAhora puedes marcar con tu rostro o PIN.");
-                verMenuPrincipal(); // Volver automáticamente
-            } catch (error) { alert("Error de conexión al guardar."); }
+                alert("✅ ¡Registro Exitoso Completo!\nRostro, PIN y Huella guardados.");
+                location.reload(); 
+            } catch (error) { 
+                alert("Error de conexión al guardar."); 
+            }
         }
 
-        // --- LÓGICA DE ASISTENCIA (MENÚ PRINCIPAL) ---
+        // =====================================================================
+        // 6. LÓGICA DE MARCAJE (ASISTENCIA)
+        // =====================================================================
         async function marcarAsistencia(accion) {
             if (usuariosRegistrados.length === 0) return alert("No hay usuarios registrados.");
+            
             const pinI = document.getElementById('pinUsuario').value.trim();
 
-            // INTENTO POR PIN
+            // CASO A: INTENTO POR PIN
             if (pinI !== "") {
                 document.getElementById('estado').innerText = "Verificando PIN...";
                 const u = usuariosRegistrados.find(usr => usr[2] && usr[2].toString() === pinI);
-                if (u) { await enviarMarcaje(u[0], "PIN", accion); document.getElementById('pinUsuario').value = "";} 
-                else { alert("PIN incorrecto."); document.getElementById('estado').innerText = "Listo."; }
+                
+                if (u) { 
+                    await enviarMarcaje(u[0], "PIN", accion); 
+                    document.getElementById('pinUsuario').value = "";
+                } else { 
+                    alert("PIN incorrecto."); 
+                    document.getElementById('estado').innerText = "Listo."; 
+                }
                 return;
             }
 
-            // INTENTO POR ROSTRO (SSD PROFESIONAL UN SOLO DISPARO)
+            // CASO B: INTENTO POR ROSTRO
             if (!modelosCargados) return;
-            document.getElementById('estado').innerText = "Identificando...";
+            document.getElementById('estado').innerText = "Identificando rostro..."; 
             document.getElementById('estado').style.color = "#e94560";
             
             const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
             
-            if (!det) { document.getElementById('estado').innerText = "Listo."; return alert("Rostro no detectado."); }
+            if (!det) { 
+                document.getElementById('estado').innerText = "Listo."; 
+                return alert("Rostro no detectado."); 
+            }
 
             let mejor = { nombre: "Desconocido", distancia: 1 };
+            
             usuariosRegistrados.forEach(usr => {
                 const dist = faceapi.euclideanDistance(det.descriptor, new Float32Array(JSON.parse(usr[1])));
-                if (dist < 0.45 && dist < mejor.distancia) mejor = { nombre: usr[0], distancia: dist };
+                if (dist < 0.45 && dist < mejor.distancia) {
+                    mejor = { nombre: usr[0], distancia: dist };
+                }
             });
 
-            if (mejor.nombre !== "Desconocido") await enviarMarcaje(mejor.nombre, "Facial", accion);
-            else { alert("Rostro no reconocido. Regístrate o usa PIN."); document.getElementById('estado').innerText = "Listo.";}
+            if (mejor.nombre !== "Desconocido") {
+                await enviarMarcaje(mejor.nombre, "Facial", accion);
+            } else { 
+                alert("Rostro no reconocido."); 
+                document.getElementById('estado').innerText = "Listo.";
+            }
+        }
+
+        async function marcarConHuella(accion) {
+            if (usuariosRegistrados.length === 0) return alert("No hay usuarios registrados.");
+            
+            // Llama al sensor del teléfono
+            const huellaEscaneadaId = await validarHuellaWebAuthn();
+            if (!huellaEscaneadaId) { 
+                document.getElementById('estado').innerText = "Listo."; 
+                return; 
+            }
+
+            document.getElementById('estado').innerText = "Verificando huella...";
+            
+            // Busca quién tiene ese ID secreto en la base de datos (Columna 4)
+            const usuarioEncontrado = usuariosRegistrados.find(usr => usr[3] && usr[3] === huellaEscaneadaId);
+
+            if (usuarioEncontrado) {
+                await enviarMarcaje(usuarioEncontrado[0], "Huella", accion);
+            } else {
+                alert("Esta huella no pertenece a ningún usuario registrado en este dispositivo.");
+                document.getElementById('estado').innerText = "Listo.";
+            }
         }
 
         async function enviarMarcaje(nombre, metodo, accion) {
             const datos = { tipo: "marcaje", nombre: nombre, metodo: metodo, accion: accion };
             try {
                 await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) });
-                document.getElementById('estado').innerText = "¡Hola " + nombre + "!";
+                
+                document.getElementById('estado').innerText = "¡Hola " + nombre + "!"; 
                 document.getElementById('estado').style.color = "#4caf50";
                 alert("✅ " + accion + " grabada (" + metodo + ") para: " + nombre);
-            } catch (error) { alert("Error guardando marcaje."); }
-            setTimeout(() => { document.getElementById('estado').innerText = "Listo."; document.getElementById('estado').style.color =modoActual=="principal"?"#4caf50":"#e94560" ; }, 3000);
-        }
-
-        // --- HERRAMIENTAS Y BLOQUEO GLOBAL ---
-        function cambiarCamara() { tipoCamara = (tipoCamara === "user") ? "environment" : "user"; iniciarVideo(); }
-        function toggleLuz() { document.body.classList.toggle('modo-luz'); }
-
-        let tBloqueo = 0;
-        async function intentarBloqueoGlobal() {
-            tBloqueo++;
-            if (tBloqueo === 3) {
-                tBloqueo = 0;
-                let pin = prompt("PIN ADMIN para Bloqueo Global:");
-                if (pin === "1234") {
-                    document.getElementById('estado').innerText = "Bloqueando...";
-                    await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({tipo: "cambiar_estado", nuevoEstado: "mantenimiento"}) });
-                    location.reload();
-                }
+            } catch (error) { 
+                alert("Error guardando marcaje en la nube."); 
             }
-            setTimeout(() => { tBloqueo = 0; }, 1500);
+            
+            setTimeout(() => { 
+                document.getElementById('estado').innerText = "Listo. Usa cámara, PIN o Huella."; 
+                document.getElementById('estado').style.color = (modoActual=="principal") ? "#4caf50" : "#e94560"; 
+            }, 3000);
         }
 
-        let tDesbloqueo = 0;
-        async function intentarDesbloqueoGlobal() {
-            tDesbloqueo++;
-            if (tDesbloqueo === 2) {
-                tDesbloqueo = 0;
-                let pin = prompt("PIN ADMIN para Desbloqueo:");
-                if (pin === "1234") {
-                    await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({tipo: "cambiar_estado", nuevoEstado: "activo"}) });
-                    location.reload();
-                }
-            }
-            setTimeout(() => { tDesbloqueo = 0; }, 1500);
+        // =====================================================================
+        // 7. BLOQUEO GLOBAL DE EMERGENCIA (HUEVO DE PASCUA)
+        // =====================================================================
+        let tBloqueo = 0; 
+        async function intentarBloqueoGlobal() { 
+            tBloqueo++; 
+            if (tBloqueo === 3) { 
+                tBloqueo = 0; 
+                let pin = prompt("🔐 MODO ADMIN (Bloqueo): Ingresa PIN de seguridad:"); 
+                if (pin === "1234") { 
+                    document.getElementById('estado').innerText = "Bloqueando sistema globalmente...";
+                    await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({tipo: "cambiar_estado", nuevoEstado: "mantenimiento"}) }); 
+                    location.reload(); 
+                } 
+            } 
+            setTimeout(() => { tBloqueo = 0; }, 1500); 
         }
 
+        let tDesbloqueo = 0; 
+        async function intentarDesbloqueoGlobal() { 
+            tDesbloqueo++; 
+            if (tDesbloqueo === 2) { 
+                tDesbloqueo = 0; 
+                let pin = prompt("🔐 MODO ADMIN (Desbloqueo): Ingresa PIN de seguridad:"); 
+                if (pin === "1234") { 
+                    await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({tipo: "cambiar_estado", nuevoEstado: "activo"}) }); 
+                    location.reload(); 
+                } 
+            } 
+            setTimeout(() => { tDesbloqueo = 0; }, 1500); 
+        }
+
+        // =====================================================================
+        // INICIO AUTOMÁTICO
+        // =====================================================================
         iniciarTodo();
     </script>
 </body>
