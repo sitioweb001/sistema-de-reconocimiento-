@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Marcaje Facial</title>
-    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #1a1a2e; color: white; }
         .contenedor { margin-top: 20px; }
@@ -13,13 +13,13 @@
         .btn-reg { background: #0f3460; color: white; }
         .btn-ent { background: #28a745; color: white; }
         .btn-sal { background: #dc3545; color: white; }
-        #estado { color: #e94560; font-weight: bold; }
+        #estado { color: #e94560; font-weight: bold; font-size: 1.2em; }
     </style>
 </head>
 <body>
 
     <h2>Sistema de Asistencia Facial</h2>
-    <p id="estado">Cargando Inteligencia Artificial...</p>
+    <p id="estado">Cargando Inteligencia Artificial... (Por favor espera unos segundos)</p>
 
     <div class="contenedor">
         <video id="video" width="400" height="300" autoplay muted></video>
@@ -34,84 +34,147 @@
     </div>
 
     <script>
-        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxwLkaOTgC9M8_z7_ZpmMspWK8L_0zr3RKmEuCy27VTSWKhOrriul91tff6RZFZPnKv/exec"; // REEMPLAZA ESTO
+        // ¡IMPORTANTE! Pega tu URL de Apps Script aquí (la que termina en /exec)
+        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxwLkaOTgC9M8_z7_ZpmMspWK8L_0zr3RKmEuCy27VTSWKhOrriul91tff6RZFZPnKv/exec"; 
+        
         const video = document.getElementById('video');
         let modelosCargados = false;
         let usuariosRegistrados = [];
 
+        // SOLUCIÓN 2: Rutas de modelos más estables
+        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+
         // 1. Cargar Modelos y Cámara
         Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/ml5js/ml5-data-and-models/main/models/faceapi/tiny_face_detector_model-weights_manifest.json'),
-            faceapi.nets.faceLandmark68Net.loadFromUri('https://raw.githubusercontent.com/ml5js/ml5-data-and-models/main/models/faceapi/face_landmark_68_model-weights_manifest.json'),
-            faceapi.nets.faceRecognitionNet.loadFromUri('https://raw.githubusercontent.com/ml5js/ml5-data-and-models/main/models/faceapi/face_recognition_model-weights_manifest.json')
-        ]).then(iniciarVideo);
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]).then(iniciarVideo).catch(err => {
+            console.error("Error al cargar los modelos: ", err);
+            document.getElementById('estado').innerText = "Error cargando la IA. Revisa la consola.";
+        });
 
         function iniciarVideo() {
             navigator.mediaDevices.getUserMedia({ video: {} })
                 .then(stream => { 
                     video.srcObject = stream;
                     document.getElementById('estado').innerText = "Sistema Listo. Esperando Rostro...";
+                    document.getElementById('estado').style.color = "#4caf50";
                     modelosCargados = true;
                     cargarUsuarios(); // Baja los datos de Google Sheets
+                })
+                .catch(err => {
+                    console.error("Error de cámara: ", err);
+                    document.getElementById('estado').innerText = "Error: No hay acceso a la cámara.";
                 });
         }
 
         async function cargarUsuarios() {
             try {
+                // Obtenemos los usuarios registrados desde tu Google Sheets
                 const res = await fetch(URL_SCRIPT);
                 usuariosRegistrados = await res.json();
-                console.log("Usuarios cargados:", usuariosRegistrados.length);
-            } catch (e) { console.error("Error cargando usuarios", e); }
+                console.log("Usuarios cargados desde la nube:", usuariosRegistrados.length);
+            } catch (e) { 
+                console.error("Error cargando usuarios o no hay ninguno aún.", e); 
+            }
         }
 
         // 2. Función para Registrar un nuevo usuario
         async function registrarRostro() {
+            if (!modelosCargados) return alert("Espera a que cargue el sistema.");
+            
             const nombre = document.getElementById('nombreUsuario').value;
-            if (!nombre) return alert("Escribe un nombre");
+            if (!nombre) return alert("Por favor, escribe tu nombre primero.");
 
-            document.getElementById('estado').innerText = "Escaneando...";
+            document.getElementById('estado').innerText = "Escaneando rostro para registro...";
+            
+            // Detecta el rostro
             const deteccion = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
 
             if (deteccion) {
                 const datos = {
                     tipo: "registro_facial",
                     nombre: nombre,
-                    descriptor: Array.from(deteccion.descriptor)
+                    descriptor: Array.from(deteccion.descriptor) // Convierte el rostro a números
                 };
 
-                await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) });
-                alert("¡Rostro guardado exitosamente!");
-                location.reload();
+                // Enviamos a Google Sheets
+                try {
+                    await fetch(URL_SCRIPT, { 
+                        method: 'POST', 
+                        mode: 'no-cors', 
+                        body: JSON.stringify(datos) 
+                    });
+                    document.getElementById('estado').innerText = "¡Rostro guardado exitosamente!";
+                    alert("Rostro registrado. La página se recargará para actualizar los datos.");
+                    location.reload(); // Recarga para descargar la lista actualizada
+                } catch (error) {
+                    alert("Error al enviar los datos a Google Sheets.");
+                }
             } else {
-                alert("No se detecta rostro. Acércate más.");
+                alert("No se detecta tu rostro. Ilumina mejor tu cara o acércate a la cámara.");
+                document.getElementById('estado').innerText = "Sistema Listo. Esperando Rostro...";
             }
         }
 
         // 3. Función para Identificar y Marcar Asistencia
         async function identificarRostro(accion) {
+            if (!modelosCargados) return alert("Espera a que cargue el sistema.");
+            if (usuariosRegistrados.length === 0) return alert("No hay usuarios registrados en el sistema aún.");
+
             document.getElementById('estado').innerText = "Identificando...";
+            
+            // Detecta la cara que está en la cámara ahora mismo
             const deteccion = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
 
-            if (!deteccion) return alert("Rostro no detectado");
+            if (!deteccion) {
+                document.getElementById('estado').innerText = "Sistema Listo. Esperando Rostro...";
+                return alert("Rostro no detectado. Acércate más a la cámara.");
+            }
 
             let mejorMatch = { nombre: "Desconocido", distancia: 1 };
 
+            // Compara con todos los rostros bajados de Google Sheets
             usuariosRegistrados.forEach(usr => {
                 const descriptorGuardado = new Float32Array(JSON.parse(usr[1]));
                 const distancia = faceapi.euclideanDistance(deteccion.descriptor, descriptorGuardado);
                 
+                // Si la distancia es menor a 0.45, es la misma persona
                 if (distancia < 0.45 && distancia < mejorMatch.distancia) {
                     mejorMatch = { nombre: usr[0], distancia: distancia };
                 }
             });
 
             if (mejorMatch.nombre !== "Desconocido") {
-                document.getElementById('estado').innerText = "¡Hola " + mejorMatch.nombre + "!";
-                const datos = { tipo: "marcaje", nombre: mejorMatch.nombre, accion: accion };
-                await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) });
-                alert("Asistencia grabada: " + mejorMatch.nombre);
+                document.getElementById('estado').innerText = "¡Marcado! Hola, " + mejorMatch.nombre;
+                
+                const datos = { 
+                    tipo: "marcaje", 
+                    nombre: mejorMatch.nombre, 
+                    accion: accion 
+                };
+
+                // Enviamos el marcaje a Google Sheets
+                try {
+                    await fetch(URL_SCRIPT, { 
+                        method: 'POST', 
+                        mode: 'no-cors', 
+                        body: JSON.stringify(datos) 
+                    });
+                    alert("Asistencia grabada (" + accion + "): " + mejorMatch.nombre);
+                } catch (error) {
+                    alert("Error al guardar asistencia en la nube.");
+                }
+
+                // Resetea el mensaje después de 3 segundos
+                setTimeout(() => {
+                    document.getElementById('estado').innerText = "Sistema Listo. Esperando Rostro...";
+                }, 3000);
+
             } else {
-                alert("Rostro no reconocido. Regístrate primero.");
+                document.getElementById('estado').innerText = "Sistema Listo. Esperando Rostro...";
+                alert("No te reconozco. Asegúrate de registrarte primero o acércate a la luz.");
             }
         }
     </script>
