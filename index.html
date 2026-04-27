@@ -2,181 +2,211 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Marcaje Facial</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Asistencia Facial Global</title>
     <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #1a1a2e; color: white; }
-        .contenedor { margin-top: 20px; }
-        video, canvas { position: absolute; left: 50%; transform: translateX(-50%); border-radius: 10px; }
-        .controles { margin-top: 450px; }
-        button { padding: 15px 25px; margin: 10px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
-        .btn-reg { background: #0f3460; color: white; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #1a1a2e; color: white; margin: 0; padding: 15px; transition: 0.3s; }
+        body.modo-luz { background: #ffffff; color: #000000; }
+        .contenedor-video { position: relative; width: 100%; max-width: 400px; aspect-ratio: 4/3; margin: 10px auto; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); background: #000; }
+        video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .controles { margin-top: 15px; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto; }
+        button, input { width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 8px; font-size: 16px; }
+        button { cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:active { opacity: 0.7; transform: scale(0.98); } 
+        .herramientas { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-luz { background: #f1c40f; color: #333; }
+        .btn-camara { background: #3498db; color: white; }
+        .btn-reg { background: #0f3460; color: white; margin-top: 5px; }
         .btn-ent { background: #28a745; color: white; }
         .btn-sal { background: #dc3545; color: white; }
-        #estado { color: #e94560; font-weight: bold; font-size: 1.2em; }
+        #estado { color: #e94560; font-weight: bold; font-size: 1.1em; min-height: 45px; margin: 10px 0; }
+        input { text-align: center; background: #f0f0f0; color: #333; border: 1px solid #ccc; }
+        .input-pin { border: 2px solid #f1c40f; background: #fffde7; }
+
+        /* PANTALLA DE MANTENIMIENTO GLOBAL */
+        #pantalla-mantenimiento {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #111; color: white; z-index: 9999;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .icono-alerta { font-size: 100px; color: #f1c40f; cursor: pointer; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <h2>Sistema de Asistencia Facial</h2>
-    <p id="estado">Cargando Inteligencia Artificial... (Por favor espera unos segundos)</p>
+    <div id="pantalla-mantenimiento">
+        <div class="icono-alerta" onclick="intentarDesbloqueoGlobal()">❗</div>
+        <h2>SISTEMA EN MANTENIMIENTO</h2>
+        <p>Aviso: Bloqueo de seguridad activado.</p>
+    </div>
 
-    <div class="contenedor">
-        <video id="video" width="400" height="300" autoplay muted></video>
+    <h2 id="titulo-secreto" onclick="intentarBloqueoGlobal()" style="user-select:none; cursor:pointer;">Sistema de Asistencia Facial</h2>
+    
+    <div class="herramientas">
+        <button class="btn-luz" onclick="toggleLuz()">💡 Luz</button>
+        <button class="btn-camara" onclick="cambiarCamara()">🔄 Cámara</button>
+    </div>
+
+    <p id="estado">Cargando Sistema...</p>
+
+    <div class="contenedor-video">
+        <video id="video" playsinline autoplay muted></video>
+        <canvas id="canvas"></canvas>
     </div>
 
     <div class="controles">
-        <input type="text" id="nombreUsuario" placeholder="Nombre para registro" style="padding: 10px; border-radius: 5px;">
-        <button class="btn-reg" onclick="registrarRostro()">1. Registrar Rostro</button>
-        <br>
-        <button class="btn-ent" onclick="identificarRostro('Entrada')">Marcar ENTRADA</button>
-        <button class="btn-sal" onclick="identificarRostro('Salida')">Marcar SALIDA</button>
+        <input type="text" id="nombreUsuario" placeholder="Tu Nombre">
+        <button class="btn-reg" onclick="registrarRostroYPin()">1. Registrar Rostro + PIN</button>
+        <hr style="border: 1px solid #ccc; margin: 15px 0;">
+        <input type="password" id="pinUsuario" class="input-pin" placeholder="🔑 PIN (Alternativo)">
+        <button class="btn-ent" onclick="marcarAsistencia('Entrada')">🟢 Entrada</button>
+        <button class="btn-sal" onclick="marcarAsistencia('Salida')">🔴 Salida</button>
     </div>
 
     <script>
-        // ¡IMPORTANTE! Pega tu URL de Apps Script aquí (la que termina en /exec)
         const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxwLkaOTgC9M8_z7_ZpmMspWK8L_0zr3RKmEuCy27VTSWKhOrriul91tff6RZFZPnKv/exec"; 
-        
+        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
         const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
         let modelosCargados = false;
         let usuariosRegistrados = [];
+        let tipoCamara = "user"; 
 
-        // SOLUCIÓN 2: Rutas de modelos más estables
-        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+        // --- BLOQUEO GLOBAL ---
+        let tBloqueo = 0;
+        async function intentarBloqueoGlobal() {
+            tBloqueo++;
+            if (tBloqueo === 3) {
+                tBloqueo = 0;
+                let pin = prompt("PIN de Bloqueo Global:");
+                if (pin === "1234") {
+                    await enviarEstadoGlobal("mantenimiento");
+                    location.reload();
+                }
+            }
+            setTimeout(() => { tBloqueo = 0; }, 1500);
+        }
 
-        // 1. Cargar Modelos y Cámara
-        Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-        ]).then(iniciarVideo).catch(err => {
-            console.error("Error al cargar los modelos: ", err);
-            document.getElementById('estado').innerText = "Error cargando la IA. Revisa la consola.";
-        });
+        let tDesbloqueo = 0;
+        async function intentarDesbloqueoGlobal() {
+            tDesbloqueo++;
+            if (tDesbloqueo === 2) {
+                tDesbloqueo = 0;
+                let pin = prompt("PIN de Desbloqueo Global:");
+                if (pin === "1234") {
+                    await enviarEstadoGlobal("activo");
+                    location.reload();
+                }
+            }
+            setTimeout(() => { tDesbloqueo = 0; }, 1500);
+        }
+
+        async function enviarEstadoGlobal(nuevo) {
+            document.getElementById('estado').innerText = "Actualizando Nube...";
+            await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({tipo: "cambiar_estado", nuevoEstado: nuevo}) });
+        }
+
+        // --- INICIO DEL SISTEMA ---
+        async function iniciarTodo() {
+            document.getElementById('estado').innerText = "Verificando estado global...";
+            try {
+                const res = await fetch(URL_SCRIPT);
+                const data = await res.json();
+                
+                if (data.estado === "mantenimiento") {
+                    document.getElementById('pantalla-mantenimiento').style.display = 'flex';
+                    return; // Detiene todo si está bloqueado
+                }
+                
+                usuariosRegistrados = data.usuarios;
+                cargarIA();
+            } catch (e) {
+                document.getElementById('estado').innerText = "Error de conexión.";
+            }
+        }
+
+        function cargarIA() {
+            Promise.all([
+                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]).then(iniciarVideo);
+        }
 
         function iniciarVideo() {
-            navigator.mediaDevices.getUserMedia({ video: {} })
+            if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: tipoCamara } })
                 .then(stream => { 
                     video.srcObject = stream;
-                    document.getElementById('estado').innerText = "Sistema Listo. Esperando Rostro...";
+                    let escala = (tipoCamara === "user") ? "scaleX(-1)" : "scaleX(1)";
+                    video.style.transform = escala; canvas.style.transform = escala;
+                    document.getElementById('estado').innerText = "Sistema Listo.";
                     document.getElementById('estado').style.color = "#4caf50";
                     modelosCargados = true;
-                    cargarUsuarios(); // Baja los datos de Google Sheets
-                })
-                .catch(err => {
-                    console.error("Error de cámara: ", err);
-                    document.getElementById('estado').innerText = "Error: No hay acceso a la cámara.";
                 });
         }
 
-        async function cargarUsuarios() {
-            try {
-                // Obtenemos los usuarios registrados desde tu Google Sheets
-                const res = await fetch(URL_SCRIPT);
-                usuariosRegistrados = await res.json();
-                console.log("Usuarios cargados desde la nube:", usuariosRegistrados.length);
-            } catch (e) { 
-                console.error("Error cargando usuarios o no hay ninguno aún.", e); 
-            }
+        function cambiarCamara() { tipoCamara = (tipoCamara === "user") ? "environment" : "user"; iniciarVideo(); }
+        function toggleLuz() { document.body.classList.toggle('modo-luz'); }
+
+        video.addEventListener('play', () => {
+            const displaySize = { width: video.videoWidth || 400, height: video.videoHeight || 300 };
+            faceapi.matchDimensions(canvas, displaySize);
+            setInterval(async () => {
+                if (!modelosCargados) return;
+                const currentSize = { width: video.videoWidth || 400, height: video.videoHeight || 300 };
+                faceapi.matchDimensions(canvas, currentSize);
+                const detections = await faceapi.detectAllFaces(video, new faceapi.SsdMobilenetv1Options());
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                faceapi.draw.drawDetections(canvas, faceapi.resizeResults(detections, currentSize));
+            }, 100); 
+        });
+
+        async function registrarRostroYPin() {
+            const nombre = document.getElementById('nombreUsuario').value.trim();
+            if (!nombre) return alert("Escribe tu nombre.");
+            const pinNuevo = prompt("Crea un PIN numérico:");
+            if (!pinNuevo || isNaN(pinNuevo)) return alert("PIN inválido.");
+
+            const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
+            if (det) {
+                const datos = { tipo: "registro_facial", nombre: nombre, descriptor: Array.from(det.descriptor), pin: pinNuevo };
+                await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) });
+                alert("¡Registrado!"); location.reload();
+            } else { alert("No veo tu rostro."); }
         }
 
-        // 2. Función para Registrar un nuevo usuario
-        async function registrarRostro() {
-            if (!modelosCargados) return alert("Espera a que cargue el sistema.");
-            
-            const nombre = document.getElementById('nombreUsuario').value;
-            if (!nombre) return alert("Por favor, escribe tu nombre primero.");
-
-            document.getElementById('estado').innerText = "Escaneando rostro para registro...";
-            
-            // Detecta el rostro
-            const deteccion = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-
-            if (deteccion) {
-                const datos = {
-                    tipo: "registro_facial",
-                    nombre: nombre,
-                    descriptor: Array.from(deteccion.descriptor) // Convierte el rostro a números
-                };
-
-                // Enviamos a Google Sheets
-                try {
-                    await fetch(URL_SCRIPT, { 
-                        method: 'POST', 
-                        mode: 'no-cors', 
-                        body: JSON.stringify(datos) 
-                    });
-                    document.getElementById('estado').innerText = "¡Rostro guardado exitosamente!";
-                    alert("Rostro registrado. La página se recargará para actualizar los datos.");
-                    location.reload(); // Recarga para descargar la lista actualizada
-                } catch (error) {
-                    alert("Error al enviar los datos a Google Sheets.");
-                }
-            } else {
-                alert("No se detecta tu rostro. Ilumina mejor tu cara o acércate a la cámara.");
-                document.getElementById('estado').innerText = "Sistema Listo. Esperando Rostro...";
+        async function marcarAsistencia(accion) {
+            const pinI = document.getElementById('pinUsuario').value.trim();
+            if (pinI !== "") {
+                const u = usuariosRegistrados.find(usr => usr[2] && usr[2].toString() === pinI);
+                if (u) { await enviarMarcaje(u[0], "PIN", accion); } else { alert("PIN incorrecto."); }
+                return;
             }
-        }
+            const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
+            if (!det) return alert("Rostro no detectado.");
 
-        // 3. Función para Identificar y Marcar Asistencia
-        async function identificarRostro(accion) {
-            if (!modelosCargados) return alert("Espera a que cargue el sistema.");
-            if (usuariosRegistrados.length === 0) return alert("No hay usuarios registrados en el sistema aún.");
-
-            document.getElementById('estado').innerText = "Identificando...";
-            
-            // Detecta la cara que está en la cámara ahora mismo
-            const deteccion = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-
-            if (!deteccion) {
-                document.getElementById('estado').innerText = "Sistema Listo. Esperando Rostro...";
-                return alert("Rostro no detectado. Acércate más a la cámara.");
-            }
-
-            let mejorMatch = { nombre: "Desconocido", distancia: 1 };
-
-            // Compara con todos los rostros bajados de Google Sheets
+            let mejor = { nombre: "Desconocido", distancia: 1 };
             usuariosRegistrados.forEach(usr => {
-                const descriptorGuardado = new Float32Array(JSON.parse(usr[1]));
-                const distancia = faceapi.euclideanDistance(deteccion.descriptor, descriptorGuardado);
-                
-                // Si la distancia es menor a 0.45, es la misma persona
-                if (distancia < 0.45 && distancia < mejorMatch.distancia) {
-                    mejorMatch = { nombre: usr[0], distancia: distancia };
-                }
+                const dist = faceapi.euclideanDistance(det.descriptor, new Float32Array(JSON.parse(usr[1])));
+                if (dist < 0.45 && dist < mejor.distancia) mejor = { nombre: usr[0], distancia: dist };
             });
 
-            if (mejorMatch.nombre !== "Desconocido") {
-                document.getElementById('estado').innerText = "¡Marcado! Hola, " + mejorMatch.nombre;
-                
-                const datos = { 
-                    tipo: "marcaje", 
-                    nombre: mejorMatch.nombre, 
-                    accion: accion 
-                };
-
-                // Enviamos el marcaje a Google Sheets
-                try {
-                    await fetch(URL_SCRIPT, { 
-                        method: 'POST', 
-                        mode: 'no-cors', 
-                        body: JSON.stringify(datos) 
-                    });
-                    alert("Asistencia grabada (" + accion + "): " + mejorMatch.nombre);
-                } catch (error) {
-                    alert("Error al guardar asistencia en la nube.");
-                }
-
-                // Resetea el mensaje después de 3 segundos
-                setTimeout(() => {
-                    document.getElementById('estado').innerText = "Sistema Listo. Esperando Rostro...";
-                }, 3000);
-
-            } else {
-                document.getElementById('estado').innerText = "Sistema Listo. Esperando Rostro...";
-                alert("No te reconozco. Asegúrate de registrarte primero o acércate a la luz.");
-            }
+            if (mejor.nombre !== "Desconocido") await enviarMarcaje(mejor.nombre, "Facial", accion);
+            else alert("No reconocido.");
         }
+
+        async function enviarMarcaje(nombre, metodo, accion) {
+            const datos = { tipo: "marcaje", nombre: nombre, metodo: metodo, accion: accion };
+            await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) });
+            alert(accion + " grabada para: " + nombre);
+            document.getElementById('pinUsuario').value = "";
+        }
+
+        // Arrancamos el chequeo de seguridad inicial
+        iniciarTodo();
     </script>
 </body>
 </html>
