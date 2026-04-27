@@ -3,75 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Asistencia Pro v4.0</title>
+    <title>Asistencia Biométrica Premium v4.0</title>
     
     <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #1a1a2e; color: white; margin: 0; padding-bottom: 40px; transition: 0.3s; }
-        body.modo-luz { background: #ffffff; color: #111; }
-        
-        .navbar { background: #111122; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
-        body.modo-luz .navbar { background: #eee; color: #111; }
+        /* --- DISEÑO PROFESIONAL --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            background: #0f0c29; 
+            background: linear-gradient(to bottom, #24243e, #302b63, #0f0c29);
+            color: white; 
+            margin: 0; 
+            padding-bottom: 50px; 
+            min-height: 100vh;
+            transition: 0.3s;
+        }
 
-        .main-container { padding: 15px; max-width: 450px; margin: 0 auto; }
-        .contenedor-video { position: relative; width: 100%; aspect-ratio: 4/3; margin: 15px 0; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.5); background: #000; border: 2px solid #303050; }
+        /* Modo Luz (Flash de Pantalla) */
+        body.modo-luz { background: #ffffff !important; color: #111 !important; }
+        body.modo-luz .navbar { background: #e0e0e0; color: #111; }
+        body.modo-luz .card { background: #f1f1f1; color: #111; border: 1px solid #ccc; }
+
+        /* Navegación */
+        .navbar { 
+            background: #161625; 
+            padding: 15px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .navbar-brand { font-weight: 900; letter-spacing: 1px; cursor: pointer; user-select: none; }
+        .nav-buttons { display: flex; gap: 8px; }
+        .btn-nav { background: #3498db; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+
+        /* Contenedores */
+        .main-container { padding: 15px; max-width: 480px; margin: 0 auto; }
+        .contenedor-video { 
+            position: relative; 
+            width: 100%; 
+            aspect-ratio: 4/3; 
+            margin: 15px 0; 
+            border-radius: 20px; 
+            overflow: hidden; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7); 
+            background: #000; 
+            border: 3px solid #3f3f5f;
+        }
         video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
 
-        #estado { font-weight: bold; min-height: 60px; display: flex; align-items: center; justify-content: center; color: #e94560; padding: 10px; }
+        /* Estados y Alertas */
+        #estado { font-weight: bold; min-height: 70px; display: flex; align-items: center; justify-content: center; color: #ff4b5c; padding: 10px; font-size: 1.1em; }
 
-        .seccion { display: none; animation: fadeIn 0.4s; }
+        /* Secciones */
+        .seccion { display: none; animation: slideUp 0.4s ease-out; }
         .seccion.activa { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        button, input, select { width: 100%; padding: 14px; margin-bottom: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; }
-        button { cursor: pointer; transition: 0.2s; }
-        
-        .btn-nav { background: #3498db; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-        .btn-ent { background: #27ae60; color: white; }
-        .btn-sal { background: #c0392b; color: white; }
-        .btn-pdf { background: #e74c3c; color: white; margin-top: 10px; }
-        
-        .card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #444; }
-        body.modo-luz .card { background: #f9f9f9; color: #111; border: 1px solid #ddd; }
+        /* UI Elements */
+        button, input, select { width: 100%; padding: 16px; margin-bottom: 12px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; outline: none; }
+        button { cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        button:active { transform: scale(0.96); box-shadow: none; }
 
-        .tabla-scroll { width: 100%; overflow-x: auto; margin-top: 10px; border-radius: 8px; max-height: 300px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; background: white; color: #333; }
-        th, td { padding: 8px; border: 1px solid #ddd; text-align: center; }
-        th { background: #2c3e50; color: white; position: sticky; top: 0; }
+        .herramientas { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-tool { background: #4a4e69; color: white; flex: 1; font-size: 13px; padding: 12px; }
 
-        .herramientas { display: flex; gap: 8px; margin-bottom: 10px; }
-        .btn-tool { background: #555; color: white; padding: 10px; font-size: 12px; }
+        .btn-ent { background: #2ecc71; color: white; }
+        .btn-sal { background: #e74c3c; color: white; }
+        .btn-pdf { background: #f39c12; color: white; margin-top: 15px; }
 
-        #pantalla-bloqueo { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; }
+        .input-pin { border: 3px solid #f1c40f; background: #fffde7 !important; color: #333 !important; text-align: center; font-size: 1.5em; letter-spacing: 5px; }
+
+        /* Tarjetas e Historial */
+        .card { background: rgba(255,255,255,0.07); padding: 20px; border-radius: 18px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: left; }
+        .tabla-contenedor { width: 100%; overflow-x: auto; border-radius: 12px; margin-top: 15px; max-height: 350px; }
+        table { width: 100%; border-collapse: collapse; background: white; color: #333; font-size: 12px; }
+        th, td { padding: 12px; border: 1px solid #eee; text-align: center; }
+        th { background: #1e1e2f; color: white; position: sticky; top: 0; }
+        tr:nth-child(even) { background: #f9f9f9; }
+
+        /* Pantalla de Bloqueo */
+        #pantalla-bloqueo { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; z-index: 10000; flex-direction: column; justify-content: center; align-items: center; 
+        }
     </style>
 </head>
 <body>
 
     <div id="pantalla-bloqueo">
-        <div style="font-size:100px; color:#f1c40f; cursor:pointer;" onclick="intentarDesbloqueo()">❗</div>
-        <h2>SISTEMA BLOQUEADO</h2>
+        <div style="font-size:120px; color:#f1c40f; cursor:pointer; user-select:none;" onclick="intentarDesbloqueo()">❗</div>
+        <h1 style="letter-spacing: 3px;">SISTEMA BLOQUEADO</h1>
+        <p style="color: #666;">Contacte al administrador para acceso.</p>
     </div>
 
     <div class="navbar">
         <div class="navbar-brand" onclick="intentarBloqueo()">Asistencia Pro</div>
-        <div style="display: flex; gap: 5px;">
-            <button class="btn-nav" id="btn-h" onclick="verSec('sec-historial')">Historial</button>
-            <button class="btn-nav" id="btn-r" onclick="verSec('sec-registro')">Registro</button>
-            <button class="btn-nav" id="btn-v" onclick="verSec('sec-principal')" style="display:none; background:#555;">Volver</button>
+        <div class="nav-buttons">
+            <button class="btn-nav" id="btn-h" onclick="cambiarSeccion('sec-historial')">Historial</button>
+            <button class="btn-nav" id="btn-r" onclick="cambiarSeccion('sec-registro')">Registro</button>
+            <button class="btn-nav" id="btn-v" onclick="cambiarSeccion('sec-principal')" style="display:none; background:#444;">Volver</button>
         </div>
     </div>
 
     <div class="main-container">
         
-        <p id="estado">Iniciando...</p>
+        <p id="estado">Iniciando Biometría...</p>
 
         <div class="herramientas">
-            <button class="btn-tool" onclick="document.body.classList.toggle('modo-luz')">💡 Luz</button>
-            <button class="btn-tool" onclick="girarCamara()">🔄 Girar Cámara</button>
+            <button class="btn-tool" onclick="document.body.classList.toggle('modo-luz')">💡 Luz Pantalla</button>
+            <button class="btn-tool" onclick="alternarCamara()">🔄 Girar Cámara</button>
         </div>
 
         <div class="contenedor-video">
@@ -80,188 +127,331 @@
         </div>
 
         <div id="sec-principal" class="seccion activa">
-            <input type="password" id="pinMarcaje" style="border: 2px solid #f1c40f; background: #fffde7; color: #333;" placeholder="🔑 Ingresa PIN">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button class="btn-ent" onclick="marcar('Entrada')">ENTRADA</button>
-                <button class="btn-sal" onclick="marcar('Salida')">SALIDA</button>
+            <input type="password" id="pinMarcaje" class="input-pin" placeholder="••••" maxlength="6">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <button class="btn-ent" onclick="ejecutarMarcaje('Entrada')">MARCAR ENTRADA</button>
+                <button class="btn-sal" onclick="ejecutarMarcaje('Salida')">MARCAR SALIDA</button>
             </div>
+            <p style="font-size: 11px; color: #888; margin-top: 20px;">Posicione su rostro frente a la cámara o ingrese su PIN.</p>
         </div>
 
         <div id="sec-registro" class="seccion">
             <div class="card">
-                <h3>Nuevo Usuario</h3>
-                <button onclick="escanear()" id="btn-scan" style="background:#34495e; color:white;">1. Escanear Rostro</button>
-                <div id="form-reg" style="display:none;">
-                    <input type="text" id="regNombre" placeholder="Nombre">
-                    <input type="number" id="regPin" placeholder="PIN">
-                    <button onclick="guardar()" style="background:#27ae60; color:white;">2. Guardar</button>
+                <h3 style="margin:0 0 15px 0; color:#3498db;">Nuevo Usuario</h3>
+                <button onclick="escanearParaRegistro()" id="btn-captura" style="background:#2c3e50; color:white;">1. Capturar Rostro</button>
+                
+                <div id="form-final-registro" style="display:none; margin-top:15px;">
+                    <p style="color:#2ecc71; font-weight:bold; font-size:14px;">✓ Rostro capturado con éxito.</p>
+                    <input type="text" id="regNombre" placeholder="Nombre Completo">
+                    <input type="number" id="regPin" placeholder="Crear PIN Numérico">
+                    <button onclick="guardarNuevoUsuario()" style="background:#27ae60; color:white;">2. Guardar en la Nube</button>
                 </div>
             </div>
         </div>
 
         <div id="sec-historial" class="seccion">
             <div class="card">
-                <h3>Historial Asistencia</h3>
-                <input type="date" id="filtroFecha" onchange="renderHistorial()">
-                <div class="tabla-scroll">
+                <h3 style="margin:0 0 15px 0; color:#f39c12;">Visor de Asistencia</h3>
+                <label style="font-size: 12px; font-weight:bold;">Filtrar Día:</label>
+                <input type="date" id="filtroFecha" onchange="dibujarTablaHistorial()">
+                
+                <div class="tabla-contenedor">
                     <table>
-                        <thead><tr><th>Nombre</th><th>Método</th><th>Acción</th><th>Hora</th></tr></thead>
-                        <tbody id="cuerpoHistorial"></tbody>
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Acción</th>
+                                <th>Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaBody"></tbody>
                     </table>
                 </div>
-                <button class="btn-pdf" onclick="generarPDF()">📄 Descargar Reporte PDF</button>
+                
+                <button class="btn-pdf" onclick="exportarReportePDF()">📄 Descargar Reporte PDF</button>
             </div>
         </div>
 
     </div>
 
     <script>
-        const URL_SCRIPT = "TU_URL_DE_APPS_SCRIPT_AQUI"; 
+        // ==========================================
+        // CONFIGURACIÓN GLOBAL
+        // ==========================================
+        const URL_PROYECTO = "TU_URL_DE_APPS_SCRIPT_AQUI"; 
         const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
         
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const estado = document.getElementById('estado');
+        const labelEstado = document.getElementById('estado');
 
-        let usuariosDB = [], historialDB = [], modelosCargados = false, rostroTemp = null, modoCam = "user";
+        let listaUsuarios = [], historialAsistencias = [];
+        let modelosListos = false;
+        let descriptorTemporal = null;
+        let modoCamara = "user"; // "user" es frontal
 
         // --- NAVEGACIÓN ---
-        function verSec(id) {
+        function cambiarSeccion(id) {
             document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
             document.getElementById(id).classList.add('activa');
-            document.getElementById('btn-h').style.display = (id === 'sec-principal') ? 'block' : 'none';
-            document.getElementById('btn-r').style.display = (id === 'sec-principal') ? 'block' : 'none';
-            document.getElementById('btn-v').style.display = (id === 'sec-principal') ? 'none' : 'block';
-            if(id === 'sec-historial') renderHistorial();
+            
+            // Lógica de botones superiores
+            const esPrincipal = (id === 'sec-principal');
+            document.getElementById('btn-h').style.display = esPrincipal ? 'block' : 'none';
+            document.getElementById('btn-r').style.display = esPrincipal ? 'block' : 'none';
+            document.getElementById('btn-v').style.display = esPrincipal ? 'none' : 'block';
+            
+            if(id === 'sec-historial') dibujarTablaHistorial();
+            if(id === 'sec-registro') resetRegistroUI();
         }
 
-        // --- CÁMARA ---
-        async function init() {
+        function resetRegistroUI() {
+            descriptorTemporal = null;
+            document.getElementById('btn-captura').style.display = "block";
+            document.getElementById('form-final-registro').style.display = "none";
+            document.getElementById('regNombre').value = "";
+            document.getElementById('regPin').value = "";
+        }
+
+        // --- CÁMARA E IA ---
+        async function bootstrap() {
+            labelEstado.innerText = "Conectando con Google Sheets...";
             try {
-                const res = await fetch(URL_SCRIPT);
+                const res = await fetch(URL_PROYECTO);
                 const data = await res.json();
-                if (data.estado === "mantenimiento") { document.getElementById('pantalla-bloqueo').style.display="flex"; return; }
-                usuariosDB = data.usuarios; historialDB = data.historial;
                 
-                await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                if (data.estado === "mantenimiento") {
+                    document.getElementById('pantalla-bloqueo').style.display = "flex";
+                    return;
+                }
                 
-                startVideo();
-            } catch (e) { estado.innerText = "Error de conexión."; }
+                listaUsuarios = data.usuarios;
+                historialAsistencias = data.historial;
+                
+                labelEstado.innerText = "Cargando Motores de IA...";
+                await Promise.all([
+                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL)
+                ]);
+                
+                activarStreamVideo();
+            } catch (e) { labelEstado.innerText = "Error: Compruebe su URL de Script."; }
         }
 
-        function startVideo() {
+        function activarStreamVideo() {
             if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: modoCam } }).then(s => {
-                video.srcObject = s;
-                video.style.transform = (modoCam === "user") ? "scaleX(-1)" : "scaleX(1)";
-                canvas.style.transform = (modoCam === "user") ? "scaleX(-1)" : "scaleX(1)";
-                modelosCargados = true; estado.innerText = "LISTO";
-            });
+            
+            const config = { video: { facingMode: modoCamara } };
+            navigator.mediaDevices.getUserMedia(config).then(stream => {
+                video.srcObject = stream;
+                
+                // Efecto espejo automático
+                const mirror = (modoCamara === "user") ? "scaleX(-1)" : "scaleX(1)";
+                video.style.transform = mirror;
+                canvas.style.transform = mirror;
+                
+                modelosListos = true;
+                labelEstado.innerText = "✓ SISTEMA LISTO";
+                labelEstado.style.color = "#2ecc71";
+            }).catch(() => { labelEstado.innerText = "Error: Acceso a cámara denegado."; });
         }
 
-        function girarCamara() { modoCam = (modoCam === "user") ? "environment" : "user"; startVideo(); }
+        function alternarCamara() {
+            modoCamara = (modoCamara === "user") ? "environment" : "user";
+            activarStreamVideo();
+        }
 
+        // DIBUJO EN VIVO (FPS OPTIMIZADOS)
         video.addEventListener('play', () => {
-            const size = { width: video.videoWidth || 400, height: video.videoHeight || 300 };
-            faceapi.matchDimensions(canvas, size);
+            const displaySize = { width: video.videoWidth || 400, height: video.videoHeight || 300 };
+            faceapi.matchDimensions(canvas, displaySize);
+            
             setInterval(async () => {
-                if (!modelosCargados) return;
-                const dets = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
-                canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
-                faceapi.draw.drawDetections(canvas, faceapi.resizeResults(dets, size));
-            }, 100);
+                if (!modelosListos || !video.srcObject) return;
+                // Usamos TinyDetector para fluidez visual
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                faceapi.draw.drawDetections(canvas, faceapi.resizeResults(detections, displaySize));
+            }, 80);
         });
 
-        // --- BIOMETRÍA ---
-        async function marcar(accion) {
-            const pin = document.getElementById('pinMarcaje').value.trim();
-            if (pin !== "") {
-                const u = usuariosDB.find(usr => usr[2].toString() === pin);
-                if (u) { send(u[0], "PIN", accion); } else { alert("PIN Incorrecto."); }
+        // ==========================================
+        // LÓGICA BIOMÉTRICA
+        // ==========================================
+        async function ejecutarMarcaje(accion) {
+            const pinDigitado = document.getElementById('pinMarcaje').value.trim();
+            
+            // 1. INTENTO POR PIN
+            if (pinDigitado !== "") {
+                const u = listaUsuarios.find(u => u[2].toString() === pinDigitado);
+                if (u) { finalizarComunicacion(u[0], "PIN", accion); } 
+                else { alert("PIN Incorrecto."); }
                 return;
             }
-            estado.innerText = "Escaneando...";
+
+            // 2. INTENTO POR ROSTRO
+            labelEstado.innerText = "Analizando Identidad...";
             const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
-            if (!det) return alert("Rostro no detectado.");
+            if (!det) return alert("Rostro no detectado. Acerque su cara.");
             
-            let match = { n: "Desconocido", d: 1 };
-            usuariosDB.forEach(u => {
-                const dist = faceapi.euclideanDistance(det.descriptor, new Float32Array(JSON.parse(u[1])));
-                if (dist < 0.45 && dist < match.d) match = { n: u[0], d: dist };
+            let mejorMatch = { nombre: "Desconocido", distancia: 1 };
+            listaUsuarios.forEach(u => {
+                const descDB = new Float32Array(JSON.parse(u[1]));
+                const dist = faceapi.euclideanDistance(det.descriptor, descDB);
+                if (dist < 0.45 && dist < mejorMatch.distancia) {
+                    mejorMatch = { nombre: u[0], distancia: dist };
+                }
             });
 
-            if (match.n !== "Desconocido") send(match.n, "Rostro", accion);
-            else alert("No reconocido.");
+            if (mejorMatch.nombre !== "Desconocido") {
+                finalizarComunicacion(mejorMatch.nombre, "Rostro", accion);
+            } else { alert("Usuario no reconocido."); labelEstado.innerText = "✓ SISTEMA LISTO"; }
         }
 
-        async function send(nombre, metodo, accion) {
-            estado.innerText = "Guardando...";
-            await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ tipo: "marcaje", nombre, metodo, accion }) });
-            alert(`✅ ${accion}: ${nombre}`); location.reload();
+        async function finalizarComunicacion(nombre, metodo, accion) {
+            labelEstado.innerText = "Guardando marcaje...";
+            await fetch(URL_PROYECTO, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: JSON.stringify({ tipo: "marcaje", nombre: nombre, metodo: metodo, accion: accion }) 
+            });
+            alert(`✅ ASISTENCIA GRABADA\n${nombre} - ${accion} (${metodo})`);
+            location.reload(); 
         }
 
-        async function escanear() {
+        // ==========================================
+        // REGISTRO DE NUEVOS USUARIOS
+        // ==========================================
+        async function escanearParaRegistro() {
+            labelEstado.innerText = "Capturando facciones...";
             const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
             if (det) {
-                rostroTemp = Array.from(det.descriptor);
-                document.getElementById('btn-scan').style.display="none";
-                document.getElementById('form-reg').style.display="block";
-            } else { alert("Error."); }
+                descriptorTemporal = Array.from(det.descriptor);
+                document.getElementById('btn-captura').style.display = "none";
+                document.getElementById('form-final-registro').style.display = "block";
+                labelEstado.innerText = "✓ Rostro Capturado. Complete los datos.";
+            } else { alert("No se pudo detectar el rostro."); }
         }
 
-        async function guardar() {
-            const n = document.getElementById('regNombre').value.trim();
-            const p = document.getElementById('regPin').value.trim();
-            if (!n || !p) return alert("Faltan datos.");
-            await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ tipo: "registro_facial", nombre: n, pin: p, descriptor: rostroTemp }) });
-            alert("¡Guardado!"); location.reload();
+        async function guardarNuevoUsuario() {
+            const nom = document.getElementById('regNombre').value.trim();
+            const pin = document.getElementById('regPin').value.trim();
+            if (!nom || !pin) return alert("Complete Nombre y PIN.");
+            
+            labelEstado.innerText = "Enviando a la nube...";
+            await fetch(URL_PROYECTO, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: JSON.stringify({ tipo: "registro_facial", nombre: nom, pin: pin, descriptor: descriptorTemporal }) 
+            });
+            alert("✓ USUARIO REGISTRADO EXITOSAMENTE");
+            location.reload();
         }
 
-        // --- HISTORIAL Y PDF ---
-        function renderHistorial() {
-            const f = document.getElementById('filtroFecha').value;
-            const c = document.getElementById('cuerpoHistorial');
-            c.innerHTML = "";
-            historialDB.forEach(row => {
-                const d = new Date(row[3]);
-                const ds = d.toISOString().split('T')[0];
-                if (!f || ds === f) {
-                    c.innerHTML += `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${d.toLocaleTimeString()}</td></tr>`;
+        // ==========================================
+        // HISTORIAL Y REPORTES PDF
+        // ==========================================
+        function dibujarTablaHistorial() {
+            const filtro = document.getElementById('filtroFecha').value; // YYYY-MM-DD
+            const tbody = document.getElementById('tablaBody');
+            tbody.innerHTML = "";
+            
+            historialAsistencias.forEach(fila => {
+                const fObj = new Date(fila[3]);
+                const fStr = fObj.toISOString().split('T')[0];
+                
+                if (!filtro || fStr === filtro) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${fila[0]}</td><td>${fila[1]}</td><td>${fila[2]}</td><td>${fObj.toLocaleTimeString()}</td>`;
+                    tbody.appendChild(tr);
                 }
             });
         }
 
-        function generarPDF() {
+        function exportarReportePDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const f = document.getElementById('filtroFecha').value || "General";
-            doc.setFillColor(44, 62, 80); doc.rect(0, 0, 210, 40, 'F');
-            doc.setTextColor(255); doc.setFontSize(20); doc.text("REPORTE ASISTENCIA", 15, 25);
-            doc.setFontSize(10); doc.text("Fecha: " + f, 15, 33);
+            const fecha = document.getElementById('filtroFecha').value || "General";
 
-            const filas = [], res = {};
-            historialDB.forEach(row => {
-                const d = new Date(row[3]);
-                if (!f || d.toISOString().split('T')[0] === f) {
-                    filas.push([row[0], row[1], row[2], d.toLocaleTimeString()]);
-                    res[row[0]] = (res[row[0]] || 0) + 1;
+            // Encabezado Profesional
+            doc.setFillColor(30, 30, 47);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.text("REPORTE DE ASISTENCIA BIOMÉTRICA", 15, 25);
+            doc.setFontSize(10);
+            doc.text("Fecha de emisión: " + new Date().toLocaleString(), 15, 33);
+            doc.text("Filtro: " + fecha, 160, 33);
+
+            const filasPDF = [];
+            const conteo = {};
+
+            historialAsistencias.forEach(fila => {
+                const d = new Date(fila[3]);
+                if (!fecha || fecha === "General" || d.toISOString().split('T')[0] === fecha) {
+                    filasPDF.push([fila[0], fila[1], fila[2], d.toLocaleTimeString()]);
+                    conteo[fila[0]] = (conteo[fila[0]] || 0) + 1;
                 }
             });
 
-            doc.autoTable({ startY: 50, head: [['Nombre', 'Método', 'Acción', 'Hora']], body: filas, theme: 'striped' });
+            doc.autoTable({
+                startY: 50,
+                head: [['Nombre del Trabajador', 'Método', 'Acción', 'Hora']],
+                body: filasPDF,
+                theme: 'striped',
+                headStyles: { fillColor: [30, 30, 47] }
+            });
+
+            // Resumen de Frecuencias
             let y = doc.lastAutoTable.finalY + 15;
-            doc.setTextColor(0); doc.setFontSize(14); doc.text("Resumen de Actividad", 15, y);
-            Object.keys(res).forEach((n, i) => { doc.setFontSize(10); doc.text(`${n}: ${res[n]} marcajes`, 15, y + 10 + (i * 7)); });
-            doc.save(`Reporte_${f}.pdf`);
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(14);
+            doc.text("Resumen de Actividad", 15, y);
+            
+            let i = 1;
+            Object.keys(conteo).forEach(nombre => {
+                doc.setFontSize(10);
+                doc.text(`${i}. ${nombre}: ${conteo[nombre]} marcajes detectados.`, 15, y + 10 + (i * 6));
+                i++;
+            });
+
+            doc.save(`Reporte_Asistencia_${fecha}.pdf`);
         }
 
-        let cb = 0; function intentarBloqueo() { cb++; if (cb===3) { if (prompt("PIN:")==="1234") fetch(URL_SCRIPT,{method:'POST',mode:'no-cors',body:JSON.stringify({tipo:"cambiar_estado",nuevoEstado:"mantenimiento"})}).then(()=>location.reload()); cb=0; } setTimeout(()=>cb=0,2000); }
-        let cd = 0; function intentarDesbloqueo() { cd++; if (cd===2) { if (prompt("PIN:")==="1234") fetch(URL_SCRIPT,{method:'POST',mode:'no-cors',body:JSON.stringify({tipo:"cambiar_estado",nuevoEstado:"activo"})}).then(()=>location.reload()); cd=0; } setTimeout(()=>cd=0,2000); }
+        // ==========================================
+        // SEGURIDAD SECRETA
+        // ==========================================
+        let clicksB = 0;
+        function intentarBloqueo() {
+            clicksB++;
+            if (clicksB === 3) {
+                if (prompt("ADMIN PIN:") === "1234") {
+                    fetch(URL_PROYECTO, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ tipo: "cambiar_estado", nuevoEstado: "mantenimiento" }) })
+                    .then(() => location.reload());
+                }
+                clicksB = 0;
+            }
+            setTimeout(() => clicksB = 0, 2000);
+        }
 
-        init();
+        let clicksD = 0;
+        function intentarDesbloqueo() {
+            clicksD++;
+            if (clicksD === 2) {
+                if (prompt("ADMIN PIN:") === "1234") {
+                    fetch(URL_PROYECTO, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ tipo: "cambiar_estado", nuevoEstado: "activo" }) })
+                    .then(() => location.reload());
+                }
+                clicksD = 0;
+            }
+            setTimeout(() => clicksD = 0, 2000);
+        }
+
+        // ARRANCAR
+        bootstrap();
     </script>
 </body>
 </html>
