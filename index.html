@@ -3,133 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Asistencia Biométrica Pro</title>
+    <title>Asistencia Pro v4.0</title>
     
     <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     
     <style>
-        /* ESTILOS PROFESIONALES */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            text-align: center; 
-            background: #1a1a2e; 
-            color: white; 
-            margin: 0; 
-            padding: 0; 
-            transition: 0.3s; 
-            overflow-x: hidden;
-        }
-
-        /* Temas */
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #1a1a2e; color: white; margin: 0; padding-bottom: 40px; transition: 0.3s; }
         body.modo-luz { background: #ffffff; color: #111; }
+        
+        .navbar { background: #111122; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
         body.modo-luz .navbar { background: #eee; color: #111; }
-        body.modo-luz input { background: #f9f9f9; color: #111; border: 1px solid #ccc; }
 
-        .navbar { 
-            background: #111122; 
-            padding: 12px 20px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.4); 
-        }
-        .navbar-brand { font-weight: bold; font-size: 1.1em; cursor: pointer; user-select: none; }
-        .btn-nav { background: #3498db; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-        .main-container { padding: 15px; max-width: 420px; margin: 0 auto; }
-
-        /* Cámara */
-        .contenedor-video { 
-            position: relative; 
-            width: 100%; 
-            aspect-ratio: 4/3; 
-            margin: 15px 0; 
-            border-radius: 15px; 
-            overflow: hidden; 
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5); 
-            background: #000;
-            border: 2px solid #303050;
-        }
+        .main-container { padding: 15px; max-width: 450px; margin: 0 auto; }
+        .contenedor-video { position: relative; width: 100%; aspect-ratio: 4/3; margin: 15px 0; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.5); background: #000; border: 2px solid #303050; }
         video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
 
-        /* Estado */
-        #estado { 
-            font-weight: bold; 
-            font-size: 1.1em; 
-            min-height: 60px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            color: #e94560; 
-            padding: 10px;
-        }
+        #estado { font-weight: bold; min-height: 60px; display: flex; align-items: center; justify-content: center; color: #e94560; padding: 10px; }
 
-        /* Secciones */
         .seccion { display: none; animation: fadeIn 0.4s; }
         .seccion.activa { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Botones e Inputs */
-        button, input { width: 100%; padding: 15px; margin-bottom: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; }
+        button, input, select { width: 100%; padding: 14px; margin-bottom: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; }
         button { cursor: pointer; transition: 0.2s; }
-        button:active { transform: scale(0.96); opacity: 0.8; }
-
-        .herramientas { display: flex; gap: 10px; margin-bottom: 10px; }
-        .btn-luz { background: #f1c40f; color: #333; }
-        .btn-camara { background: #ecf0f1; color: #333; }
-
-        .grid-asistencia { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        
+        .btn-nav { background: #3498db; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; }
         .btn-ent { background: #27ae60; color: white; }
         .btn-sal { background: #c0392b; color: white; }
+        .btn-pdf { background: #e74c3c; color: white; margin-top: 10px; }
+        
+        .card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #444; }
+        body.modo-luz .card { background: #f9f9f9; color: #111; border: 1px solid #ddd; }
 
-        .btn-reg-scan { background: #0f3460; color: white; border: 1px solid #3498db; }
-        .btn-reg-save { background: #e94560; color: white; }
+        .tabla-scroll { width: 100%; overflow-x: auto; margin-top: 10px; border-radius: 8px; max-height: 300px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; background: white; color: #333; }
+        th, td { padding: 8px; border: 1px solid #ddd; text-align: center; }
+        th { background: #2c3e50; color: white; position: sticky; top: 0; }
 
-        input { text-align: center; background: #252545; color: white; border: 1px solid #444; }
-        .input-pin { border: 2px solid #f1c40f; background: #fffde7 !important; color: #333 !important; }
+        .herramientas { display: flex; gap: 8px; margin-bottom: 10px; }
+        .btn-tool { background: #555; color: white; padding: 10px; font-size: 12px; }
 
-        /* Formulario Registro */
-        .form-registro { 
-            background: rgba(255,255,255,0.05); 
-            padding: 20px; 
-            border-radius: 15px; 
-            margin-top: 10px; 
-            display: none; 
-            border: 1px dashed #555;
-        }
-
-        /* Pantalla Bloqueo */
-        #pantalla-bloqueo {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; color: white; z-index: 9999;
-            flex-direction: column; justify-content: center; align-items: center;
-        }
-        .exclamacion { font-size: 120px; color: #f1c40f; cursor: pointer; user-select: none; }
+        #pantalla-bloqueo { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
 
     <div id="pantalla-bloqueo">
-        <div class="exclamacion" onclick="intentarDesbloqueo()">❗</div>
-        <h2 style="letter-spacing: 2px;">SISTEMA EN MANTENIMIENTO</h2>
-        <p style="color: #555;">Pausado por el administrador</p>
+        <div style="font-size:100px; color:#f1c40f; cursor:pointer;" onclick="intentarDesbloqueo()">❗</div>
+        <h2>SISTEMA BLOQUEADO</h2>
     </div>
 
     <div class="navbar">
-        <div class="navbar-brand" id="secreto-bloqueo" onclick="intentarBloqueo()">Sistema Asistencia</div>
-        <button class="btn-nav" id="btn-registro" onclick="irARegistro()">Registro</button>
-        <button class="btn-nav" id="btn-volver" onclick="irAPrincipal()" style="display: none; background: #555;">Volver</button>
+        <div class="navbar-brand" onclick="intentarBloqueo()">Asistencia Pro</div>
+        <div style="display: flex; gap: 5px;">
+            <button class="btn-nav" id="btn-h" onclick="verSec('sec-historial')">Historial</button>
+            <button class="btn-nav" id="btn-r" onclick="verSec('sec-registro')">Registro</button>
+            <button class="btn-nav" id="btn-v" onclick="verSec('sec-principal')" style="display:none; background:#555;">Volver</button>
+        </div>
     </div>
 
     <div class="main-container">
         
-        <div class="herramientas">
-            <button class="btn-luz" onclick="toggleLuz()">💡 Luz</button>
-            <button class="btn-camara" onclick="girarCamara()">🔄 Cámara</button>
-        </div>
-
         <p id="estado">Iniciando...</p>
+
+        <div class="herramientas">
+            <button class="btn-tool" onclick="document.body.classList.toggle('modo-luz')">💡 Luz</button>
+            <button class="btn-tool" onclick="girarCamara()">🔄 Girar Cámara</button>
+        </div>
 
         <div class="contenedor-video">
             <video id="video" playsinline autoplay muted></video>
@@ -137,231 +80,188 @@
         </div>
 
         <div id="sec-principal" class="seccion activa">
-            <input type="password" id="pinMarcaje" class="input-pin" placeholder="🔑 Ingresa PIN para marcar">
-            
-            <div class="grid-asistencia">
-                <button class="btn-ent" onclick="marcarAsistencia('Entrada')">🟢 ROSTRO ENTRADA</button>
-                <button class="btn-sal" onclick="marcarAsistencia('Salida')">🔴 ROSTRO SALIDA</button>
+            <input type="password" id="pinMarcaje" style="border: 2px solid #f1c40f; background: #fffde7; color: #333;" placeholder="🔑 Ingresa PIN">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn-ent" onclick="marcar('Entrada')">ENTRADA</button>
+                <button class="btn-sal" onclick="marcar('Salida')">SALIDA</button>
             </div>
-            <p style="font-size: 12px; color: #555; margin-top: 20px;">Utiliza tu PIN o ponte frente a la cámara.</p>
         </div>
 
         <div id="sec-registro" class="seccion">
-            <h3 style="margin-top: 0;">Nuevo Perfil</h3>
-            <button class="btn-reg-scan" id="btn-scan" onclick="escanearRostro()">1. Escanear mi Rostro</button>
-            
-            <div id="form-datos-registro" class="form-registro">
-                <p style="color: #2ecc71; font-weight: bold;">✅ Rostro Identificado</p>
-                <input type="text" id="regNombre" placeholder="Nombre Completo">
-                <input type="number" id="regPin" placeholder="Crea un PIN">
-                <button class="btn-reg-save" onclick="guardarRegistroTotal()">2. Guardar Registro</button>
+            <div class="card">
+                <h3>Nuevo Usuario</h3>
+                <button onclick="escanear()" id="btn-scan" style="background:#34495e; color:white;">1. Escanear Rostro</button>
+                <div id="form-reg" style="display:none;">
+                    <input type="text" id="regNombre" placeholder="Nombre">
+                    <input type="number" id="regPin" placeholder="PIN">
+                    <button onclick="guardar()" style="background:#27ae60; color:white;">2. Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="sec-historial" class="seccion">
+            <div class="card">
+                <h3>Historial Asistencia</h3>
+                <input type="date" id="filtroFecha" onchange="renderHistorial()">
+                <div class="tabla-scroll">
+                    <table>
+                        <thead><tr><th>Nombre</th><th>Método</th><th>Acción</th><th>Hora</th></tr></thead>
+                        <tbody id="cuerpoHistorial"></tbody>
+                    </table>
+                </div>
+                <button class="btn-pdf" onclick="generarPDF()">📄 Descargar Reporte PDF</button>
             </div>
         </div>
 
     </div>
 
     <script>
-        // ==========================================
-        // CONFIGURACIÓN (REEMPLAZA TU URL)
-        // ==========================================
-        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxwLkaOTgC9M8_z7_ZpmMspWK8L_0zr3RKmEuCy27VTSWKhOrriul91tff6RZFZPnKv/exec"; 
+        const URL_SCRIPT = "TU_URL_DE_APPS_SCRIPT_AQUI"; 
         const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
         
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const estado = document.getElementById('estado');
 
-        let modelosCargados = false;
-        let usuariosDB = [];
-        let camaraFrontal = true;
-        let rostroEscaneado = null;
+        let usuariosDB = [], historialDB = [], modelosCargados = false, rostroTemp = null, modoCam = "user";
 
         // --- NAVEGACIÓN ---
-        function irARegistro() {
-            document.getElementById('sec-principal').classList.remove('activa');
-            document.getElementById('sec-registro').classList.add('activa');
-            document.getElementById('btn-registro').style.display = 'none';
-            document.getElementById('btn-volver').style.display = 'block';
-            estado.innerText = "Ponte de frente a la cámara.";
-            resetFormRegistro();
+        function verSec(id) {
+            document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
+            document.getElementById(id).classList.add('activa');
+            document.getElementById('btn-h').style.display = (id === 'sec-principal') ? 'block' : 'none';
+            document.getElementById('btn-r').style.display = (id === 'sec-principal') ? 'block' : 'none';
+            document.getElementById('btn-v').style.display = (id === 'sec-principal') ? 'none' : 'block';
+            if(id === 'sec-historial') renderHistorial();
         }
 
-        function irAPrincipal() {
-            document.getElementById('sec-registro').classList.remove('activa');
-            document.getElementById('sec-principal').classList.add('activa');
-            document.getElementById('btn-registro').style.display = 'block';
-            document.getElementById('btn-volver').style.display = 'none';
-            estado.innerText = "Listo.";
-            resetFormRegistro();
-        }
-
-        function resetFormRegistro() {
-            rostroEscaneado = null;
-            document.getElementById('btn-scan').style.display = 'block';
-            document.getElementById('form-datos-registro').style.display = 'none';
-            document.getElementById('regNombre').value = '';
-            document.getElementById('regPin').value = '';
-        }
-
-        // --- INICIO DE SISTEMA ---
-        async function cargarTodo() {
-            estado.innerText = "Verificando Nube...";
+        // --- CÁMARA ---
+        async function init() {
             try {
                 const res = await fetch(URL_SCRIPT);
                 const data = await res.json();
+                if (data.estado === "mantenimiento") { document.getElementById('pantalla-bloqueo').style.display="flex"; return; }
+                usuariosDB = data.usuarios; historialDB = data.historial;
                 
-                if (data.estado === "mantenimiento") {
-                    document.getElementById('pantalla-bloqueo').style.display = "flex";
-                    return;
-                }
+                await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
                 
-                usuariosDB = data.usuarios;
-                
-                estado.innerText = "Cargando IA...";
-                await Promise.all([
-                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL)
-                ]);
-                
-                iniciarCamara();
-            } catch (e) {
-                estado.innerText = "Error de red.";
-            }
+                startVideo();
+            } catch (e) { estado.innerText = "Error de conexión."; }
         }
 
-        function iniciarCamara() {
-            const constraints = { video: { facingMode: camaraFrontal ? "user" : "environment" } };
+        function startVideo() {
             if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-
-            navigator.mediaDevices.getUserMedia(constraints).then(stream => {
-                video.srcObject = stream;
-                const scale = camaraFrontal ? "scaleX(-1)" : "scaleX(1)";
-                video.style.transform = scale; canvas.style.transform = scale;
-                estado.innerText = "SISTEMA LISTO";
-                estado.style.color = "#27ae60";
-                modelosCargados = true;
-            }).catch(() => {
-                estado.innerText = "ERROR: Sin acceso a cámara.";
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: modoCam } }).then(s => {
+                video.srcObject = s;
+                video.style.transform = (modoCam === "user") ? "scaleX(-1)" : "scaleX(1)";
+                canvas.style.transform = (modoCam === "user") ? "scaleX(-1)" : "scaleX(1)";
+                modelosCargados = true; estado.innerText = "LISTO";
             });
         }
 
-        // BUCLE DE FPS (OPTIMIZADO TINY DETECTOR)
+        function girarCamara() { modoCam = (modoCam === "user") ? "environment" : "user"; startVideo(); }
+
         video.addEventListener('play', () => {
             const size = { width: video.videoWidth || 400, height: video.videoHeight || 300 };
             faceapi.matchDimensions(canvas, size);
-            
             setInterval(async () => {
-                if (!modelosCargados || !video.srcObject) return;
-                // Usamos TinyDetector con tamaño de entrada bajo para fluidez (160 o 224)
-                const dets = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 160 }));
-                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                if (!modelosCargados) return;
+                const dets = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
+                canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
                 faceapi.draw.drawDetections(canvas, faceapi.resizeResults(dets, size));
-            }, 100); // 10 FPS reales para el cuadro verde es suficiente y ahorra CPU
+            }, 100);
         });
 
-        // --- LÓGICA DE REGISTRO ---
-        async function escanearRostro() {
-            estado.innerText = "Capturando facciones...";
-            const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
-            if (det) {
-                rostroEscaneado = Array.from(det.descriptor);
-                document.getElementById('btn-scan').style.display = "none";
-                document.getElementById('form-datos-registro').style.display = "block";
-                estado.innerText = "Rostro Capturado.";
-            } else {
-                alert("No veo tu rostro. Centra tu cara.");
-            }
-        }
-
-        async function guardarRegistroTotal() {
-            const nom = document.getElementById('regNombre').value.trim();
-            const pin = document.getElementById('regPin').value.trim();
-            if (!nom || !pin) return alert("Completa los datos.");
-
-            estado.innerText = "Guardando...";
-            const payload = { tipo: "registro_facial", nombre: nom, descriptor: rostroEscaneado, pin: pin };
-            
-            try {
-                await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                alert("¡Usuario Guardado!");
-                location.reload();
-            } catch (e) { alert("Error al guardar."); }
-        }
-
-        // --- LÓGICA DE ASISTENCIA ---
-        async function marcarAsistencia(accion) {
-            const pinVal = document.getElementById('pinMarcaje').value.trim();
-            
-            // Caso 1: Marcaje por PIN
-            if (pinVal !== "") {
-                const u = usuariosDB.find(usr => usr[2] && usr[2].toString() === pinVal);
-                if (u) { 
-                    enviarAlExcel(u[0], "PIN", accion); 
-                } else { 
-                    alert("PIN incorrecto."); 
-                }
+        // --- BIOMETRÍA ---
+        async function marcar(accion) {
+            const pin = document.getElementById('pinMarcaje').value.trim();
+            if (pin !== "") {
+                const u = usuariosDB.find(usr => usr[2].toString() === pin);
+                if (u) { send(u[0], "PIN", accion); } else { alert("PIN Incorrecto."); }
                 return;
             }
-
-            // Caso 2: Marcaje por Rostro
-            estado.innerText = "Identificando rostro...";
+            estado.innerText = "Escaneando...";
             const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
             if (!det) return alert("Rostro no detectado.");
-
-            let best = { n: "Desconocido", d: 1 };
+            
+            let match = { n: "Desconocido", d: 1 };
             usuariosDB.forEach(u => {
                 const dist = faceapi.euclideanDistance(det.descriptor, new Float32Array(JSON.parse(u[1])));
-                if (dist < 0.45 && dist < best.d) best = { n: u[0], d: dist };
+                if (dist < 0.45 && dist < match.d) match = { n: u[0], d: dist };
             });
 
-            if (best.n !== "Desconocido") {
-                enviarAlExcel(best.n, "Facial", accion);
-            } else {
-                alert("Rostro no reconocido.");
-            }
+            if (match.n !== "Desconocido") send(match.n, "Rostro", accion);
+            else alert("No reconocido.");
         }
 
-        async function enviarAlExcel(nombre, metodo, accion) {
-            estado.innerText = "Guardando marcaje...";
-            try {
-                await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ tipo: "marcaje", nombre, metodo, accion }) });
-                alert("✅ " + accion + " grabada: " + nombre);
-                document.getElementById('pinMarcaje').value = "";
-                estado.innerText = "Listo.";
-            } catch (e) { alert("Error de red."); }
+        async function send(nombre, metodo, accion) {
+            estado.innerText = "Guardando...";
+            await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ tipo: "marcaje", nombre, metodo, accion }) });
+            alert(`✅ ${accion}: ${nombre}`); location.reload();
         }
 
-        // --- UTILIDADES ---
-        function girarCamara() { camaraFrontal = !camaraFrontal; iniciarCamara(); }
-        function toggleLuz() { document.body.classList.toggle('modo-luz'); }
+        async function escanear() {
+            const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
+            if (det) {
+                rostroTemp = Array.from(det.descriptor);
+                document.getElementById('btn-scan').style.display="none";
+                document.getElementById('form-reg').style.display="block";
+            } else { alert("Error."); }
+        }
 
-        let clickB = 0;
-        function intentarBloqueo() {
-            clickB++;
-            if (clickB === 3) {
-                if (prompt("PIN ADMIN:") === "1234") {
-                    fetch(URL_SCRIPT, {method: 'POST', mode: 'no-cors', body: JSON.stringify({tipo: "cambiar_estado", nuevoEstado: "mantenimiento"})}).then(() => location.reload());
+        async function guardar() {
+            const n = document.getElementById('regNombre').value.trim();
+            const p = document.getElementById('regPin').value.trim();
+            if (!n || !p) return alert("Faltan datos.");
+            await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ tipo: "registro_facial", nombre: n, pin: p, descriptor: rostroTemp }) });
+            alert("¡Guardado!"); location.reload();
+        }
+
+        // --- HISTORIAL Y PDF ---
+        function renderHistorial() {
+            const f = document.getElementById('filtroFecha').value;
+            const c = document.getElementById('cuerpoHistorial');
+            c.innerHTML = "";
+            historialDB.forEach(row => {
+                const d = new Date(row[3]);
+                const ds = d.toISOString().split('T')[0];
+                if (!f || ds === f) {
+                    c.innerHTML += `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${d.toLocaleTimeString()}</td></tr>`;
                 }
-                clickB = 0;
-            }
-            setTimeout(() => clickB = 0, 1500);
+            });
         }
 
-        let clickD = 0;
-        function intentarDesbloqueo() {
-            clickD++;
-            if (clickD === 2) {
-                if (prompt("PIN ADMIN:") === "1234") {
-                    fetch(URL_SCRIPT, {method: 'POST', mode: 'no-cors', body: JSON.stringify({tipo: "cambiar_estado", nuevoEstado: "activo"})}).then(() => location.reload());
+        function generarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const f = document.getElementById('filtroFecha').value || "General";
+            doc.setFillColor(44, 62, 80); doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255); doc.setFontSize(20); doc.text("REPORTE ASISTENCIA", 15, 25);
+            doc.setFontSize(10); doc.text("Fecha: " + f, 15, 33);
+
+            const filas = [], res = {};
+            historialDB.forEach(row => {
+                const d = new Date(row[3]);
+                if (!f || d.toISOString().split('T')[0] === f) {
+                    filas.push([row[0], row[1], row[2], d.toLocaleTimeString()]);
+                    res[row[0]] = (res[row[0]] || 0) + 1;
                 }
-                clickD = 0;
-            }
-            setTimeout(() => clickD = 0, 1500);
+            });
+
+            doc.autoTable({ startY: 50, head: [['Nombre', 'Método', 'Acción', 'Hora']], body: filas, theme: 'striped' });
+            let y = doc.lastAutoTable.finalY + 15;
+            doc.setTextColor(0); doc.setFontSize(14); doc.text("Resumen de Actividad", 15, y);
+            Object.keys(res).forEach((n, i) => { doc.setFontSize(10); doc.text(`${n}: ${res[n]} marcajes`, 15, y + 10 + (i * 7)); });
+            doc.save(`Reporte_${f}.pdf`);
         }
 
-        cargarTodo();
+        let cb = 0; function intentarBloqueo() { cb++; if (cb===3) { if (prompt("PIN:")==="1234") fetch(URL_SCRIPT,{method:'POST',mode:'no-cors',body:JSON.stringify({tipo:"cambiar_estado",nuevoEstado:"mantenimiento"})}).then(()=>location.reload()); cb=0; } setTimeout(()=>cb=0,2000); }
+        let cd = 0; function intentarDesbloqueo() { cd++; if (cd===2) { if (prompt("PIN:")==="1234") fetch(URL_SCRIPT,{method:'POST',mode:'no-cors',body:JSON.stringify({tipo:"cambiar_estado",nuevoEstado:"activo"})}).then(()=>location.reload()); cd=0; } setTimeout(()=>cd=0,2000); }
+
+        init();
     </script>
 </body>
 </html>
